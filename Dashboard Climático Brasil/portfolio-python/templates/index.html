@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌤️ Dashboard Climático</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #667eea;
+            --bg-secondary: #764ba2;
+            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-card: white;
+            --text-primary: #333;
+            --text-secondary: white;
+            --shadow: rgba(0, 0, 0, 0.2);
+            --border-color: #667eea;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1e3c72;
+            --bg-secondary: #2a5298;
+            --bg-body: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --bg-card: #1f1f1f;
+            --text-primary: #e0e0e0;
+            --text-secondary: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --border-color: #2a5298;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-body);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: slideDown 0.6s ease-out;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .controls {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px var(--shadow);
+            animation: fadeIn 0.6s ease-out;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            align-items: end;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 0.95em;
+            transition: color 0.3s ease;
+        }
+
+        .control-group select {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .control-group select:hover {
+            border-color: var(--bg-secondary);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--bg-secondary);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .btn-refresh:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .weather-card {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px var(--shadow);
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease-out;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .weather-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: white;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+
+        .info-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .city-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px var(--shadow);
+            margin-bottom: 20px;
+            animation: fadeIn 0.6s ease-out;
+            transition: background 0.3s ease;
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--bg-primary);
+            font-size: 1.2em;
+            display: none;
+            transition: color 0.3s ease;
+        }
+
+        .loading.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--bg-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+            transition: border-color 0.3s ease;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🌤️ Dashboard Climático Brasil</h1>
+            <p>Dados em Tempo Real - Atualizado Automaticamente</p>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema escuro">🌙</button>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="stateSelect">🗺️ Estado</label>
+                <select id="stateSelect" onchange="onStateChange()">
+                    <option value="">Selecione um estado...</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="citySelect">🏙️ Cidade</label>
+                <select id="citySelect" onchange="onCityChange()">
+                    <option value="">Selecione uma cidade...</option>
+                </select>
+            </div>
+
+            <button class="btn-refresh" onclick="loadDashboard()">🔄 Atualizar</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Carregando dados climáticos...
+        </div>
+
+        <div class="weather-card">
+            <div class="city-name" id="cityTitle">Selecione uma cidade</div>
+            <div class="weather-info" id="weatherInfo"></div>
+        </div>
+
+        <div class="row">
+            <div class="chart-container">
+                <div class="chart-title">📈 Previsão de Temperatura (24h)</div>
+                <div id="tempChart"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">💧 Previsão de Umidade (24h)</div>
+                <div id="humidityChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCity = "";
+
+        async function loadStates() {
+            try {
+                const response = await fetch('/api/states');
+                const states = await response.json();
+                const stateSelect = document.getElementById('stateSelect');
+
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar estados:', error);
+            }
+        }
+
+        async function onStateChange() {
+            const state = document.getElementById('stateSelect').value;
+            const citySelect = document.getElementById('citySelect');
+
+            citySelect.innerHTML = '<option value="">Selecione uma cidade...</option>';
+
+            if (!state) return;
+
+            try {
+                const response = await fetch(`/api/cities/${state}`);
+                const cities = await response.json();
+
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar cidades:', error);
+            }
+        }
+
+        async function onCityChange() {
+            selectedCity = document.getElementById('citySelect').value;
+            if (selectedCity) {
+                await loadDashboard();
+            }
+        }
+
+        async function loadDashboard() {
+            if (!selectedCity) {
+                alert('Por favor, selecione uma cidade!');
+                return;
+            }
+
+            // Mostrar loading
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const [currentRes, forecastRes] = await Promise.all([
+                    fetch(`/api/city/${selectedCity}`),
+                    fetch(`/api/forecast/${selectedCity}`)
+                ]);
+
+                const current = await currentRes.json();
+                const forecast = await forecastRes.json();
+
+                loadWeatherInfo(current);
+                loadCharts(forecast);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                alert('Erro ao carregar dados da cidade. Tente novamente!');
+            } finally {
+                // Esconder loading
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function loadWeatherInfo(data) {
+            document.getElementById('cityTitle').textContent = `${data.city} 🌡️`;
+
+            const weatherInfo = `
+                <div class="info-item">
+                    <div class="info-label">Temperatura</div>
+                    <div class="info-value">${data.temp}°C</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Umidade</div>
+                    <div class="info-value">${data.humidity}%</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Pressão</div>
+                    <div class="info-value">${data.pressure} hPa</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Vento</div>
+                    <div class="info-value">${data.wind} m/s</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Condição</div>
+                    <div class="info-value">${data.condition}</div>
+                </div>
+            `;
+
+            document.getElementById('weatherInfo').innerHTML = weatherInfo;
+        }
+
+        function loadCharts(forecast) {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const gridColor = isDarkMode ? '#444' : '#f0f0f0';
+            const textColor = isDarkMode ? '#e0e0e0' : '#333';
+            const bgColor = isDarkMode ? '#2a2a2a' : '#f9f9f9';
+
+            const tempTrace = {
+                x: forecast.hours,
+                y: forecast.temps,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Temperatura',
+                line: { color: '#ff6b6b', width: 3 },
+                marker: { size: 10 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(255, 107, 107, 0.2)',
+                customdata: forecast.conditions,
+                hovertemplate: '<b>%{x}</b><br>%{customdata}<br>Temperatura: %{y}°C<extra></extra>'
+            };
+
+            const tempLayout = {
+                title: '',
+                xaxis: { title: 'Hora do Dia', titlefont: { color: textColor }, tickfont: { color: textColor } },
+                yaxis: { title: 'Temperatura (°C)', titlefont: { color: textColor }, tickfont: { color: textColor } },
+                plot_bgcolor: bgColor,
+                paper_bgcolor: isDarkMode ? '#1f1f1f' : 'white',
+                hovermode: 'x unified',
+                margin: { l: 60, r: 40, t: 30, b: 60 },
+                font: { color: textColor }
+            };
+
+            Plotly.newPlot('tempChart', [tempTrace], tempLayout, { responsive: true });
+
+            const humidityTrace = {
+                x: forecast.hours,
+                y: forecast.humidity,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Umidade',
+                line: { color: '#4ecdc4', width: 3 },
+                marker: { size: 10 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(78, 205, 196, 0.2)',
+                customdata: forecast.conditions,
+                hovertemplate: '<b>%{x}</b><br>%{customdata}<br>Umidade: %{y}%<extra></extra>'
+            };
+
+            const humidityLayout = {
+                title: '',
+                xaxis: { title: 'Hora do Dia', titlefont: { color: textColor }, tickfont: { color: textColor } },
+                yaxis: { title: 'Umidade (%)', titlefont: { color: textColor }, tickfont: { color: textColor } },
+                plot_bgcolor: bgColor,
+                paper_bgcolor: isDarkMode ? '#1f1f1f' : 'white',
+                hovermode: 'x unified',
+                margin: { l: 60, r: 40, t: 30, b: 60 },
+                font: { color: textColor }
+            };
+
+            Plotly.newPlot('humidityChart', [humidityTrace], humidityLayout, { responsive: true });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+            updateThemeToggleButton();
+        }
+
+        function updateThemeToggleButton() {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = isDarkMode ? '☀️' : '🌙';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark-mode');
+                updateThemeToggleButton();
+            }
+        });
+
+        loadStates();
+    </script>
+</body>
+
+</html>
